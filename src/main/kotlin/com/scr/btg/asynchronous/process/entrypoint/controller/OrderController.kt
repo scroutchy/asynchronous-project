@@ -2,6 +2,7 @@ package com.scr.btg.asynchronous.process.entrypoint.controller
 
 import com.scr.btg.asynchronous.process.domains.order.model.entity.Order
 import com.scr.btg.asynchronous.process.domains.order.service.OrderService
+import jakarta.validation.Valid
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus.CREATED
@@ -20,7 +21,7 @@ class OrderController(private val orderService: OrderService) {
     private val logger: Logger = LoggerFactory.getLogger(OrderController::class.java)
 
     @PostMapping
-    fun create(@RequestBody order: Order): ResponseEntity<Order> {
+    fun create(@RequestBody @Valid order: Order): ResponseEntity<Order> {
         logger.debug("Processing order request for client order: $order")
         return ResponseEntity.status(CREATED).body(orderService.create(order))
             .also { logger.info("Order with id ${it.body?.id} created") }
