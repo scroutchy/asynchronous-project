@@ -47,10 +47,7 @@ class OrderControllerIntegrationTest(
     @Test
     fun `find order should succeed and return an order`() {
         val order = Order("clientId", listOf(Item("item1"), Item("item2")))
-        val ordersField = OrderRepositoryImpl::class.java.getDeclaredField("orders")
-        ordersField.isAccessible = true
-        val ordersMap = ordersField.get(orderRepository) as ConcurrentHashMap<String, Order>
-        ordersMap[order.id] = order
+        orderRepository.save(order)
         val result = mockMvc.perform(get("/api/orders/" + order.id))
             .andExpect(status().isOk).andReturn()
         val body = result.readResponseBody<Order>(objectMapper)

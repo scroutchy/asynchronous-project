@@ -5,12 +5,11 @@ import com.scr.btg.asynchronous.process.domains.order.model.entity.Order
 import com.scr.btg.asynchronous.process.domains.order.model.entity.OrderStatus.PENDING
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import java.util.concurrent.ConcurrentHashMap
 
-@SpringBootTest
-class OrderRepositoryImplTest(@Autowired private val orderRepository: OrderRepositoryImpl) {
+class OrderRepositoryImplTest {
+
+    private val orderRepository = OrderRepositoryImpl()
 
     @Test
     fun `save should succeed`() {
@@ -22,9 +21,9 @@ class OrderRepositoryImplTest(@Autowired private val orderRepository: OrderRepos
         assertThat(output.items).containsExactlyInAnyOrderElementsOf(order.items)
         assertThat(output.status).isEqualTo(PENDING)
         assertThat(output.id).isNotEmpty()
-        val orders = OrderRepositoryImpl::class.java.getDeclaredField("orders")
-        orders.isAccessible = true
-        val ordersMap = orders.get(orderRepository) as ConcurrentHashMap<String, *>
+        val ordersField = OrderRepositoryImpl::class.java.getDeclaredField("orders")
+        ordersField.isAccessible = true
+        val ordersMap = ordersField.get(orderRepository) as ConcurrentHashMap<String, *>
 
         assertThat(ordersMap).isNotNull
         assertThat(ordersMap).containsKey(output.id)
@@ -38,14 +37,17 @@ class OrderRepositoryImplTest(@Autowired private val orderRepository: OrderRepos
     @Test
     fun `findById should return an order when it exists in the repository`() {
         val order = Order("test-client", listOf(Item("item1"), Item("item2")))
-        val savedOrder = orderRepository.save(order)
-        val retrievedOrder = orderRepository.findById(savedOrder.id)
+        val ordersField = OrderRepositoryImpl::class.java.getDeclaredField("orders")
+        ordersField.isAccessible = true
+        val ordersMap = ordersField.get(orderRepository) as ConcurrentHashMap<String, Order>
+        ordersMap[order.id] = order
+        val retrievedOrder = orderRepository.findById(order.id)
         assertThat(retrievedOrder).isNotNull
         with(retrievedOrder!!) {
             assertThat(clientId).isEqualTo(order.clientId)
             assertThat(items).containsExactlyInAnyOrderElementsOf(order.items)
             assertThat(status).isEqualTo(PENDING)
-            assertThat(id).isEqualTo(savedOrder.id)
+            assertThat(id).isEqualTo(order.id)
         }
     }
 
