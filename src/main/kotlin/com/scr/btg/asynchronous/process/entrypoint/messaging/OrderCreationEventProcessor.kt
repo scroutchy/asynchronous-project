@@ -4,6 +4,7 @@ import com.scr.btg.asynchronous.process.domains.order.service.OrderService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.annotation.RetryableTopic
 import org.springframework.stereotype.Component
 
 @Component
@@ -14,6 +15,7 @@ class OrderCreationEventProcessor(private val orderService: OrderService) {
     @Value("\${kafka.processing.delay:0}")
     private val delay: Long = 0
 
+    @RetryableTopic
     @KafkaListener(topics = ["\${kafka.topics.order-creation}"], groupId = "status-update-group")
     fun process(orderId: String) {
         Thread.sleep(delay) // simulate delay in processing
