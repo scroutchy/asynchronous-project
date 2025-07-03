@@ -1,0 +1,5 @@
+kafka:
+  topics:
+    order-creation: order-creation-events
+  processing:
+    delay: 500  # delay in milliseconds for test environment

@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: asynchronous-process
+kafka:
+  topics:
+    order-creation: order-creation-events
+  processing:
+    delay: 20000  # delay in milliseconds for production environment
