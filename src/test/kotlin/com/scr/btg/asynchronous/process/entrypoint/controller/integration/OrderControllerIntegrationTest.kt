@@ -7,6 +7,7 @@ import com.scr.btg.asynchronous.process.domains.order.model.entity.Order
 import com.scr.btg.asynchronous.process.domains.order.model.entity.OrderStatus.PENDING
 import com.scr.btg.asynchronous.process.domains.order.model.entity.OrderStatus.PROCESSED
 import com.scr.btg.asynchronous.process.domains.order.repository.OrderRepository
+import com.scr.btg.asynchronous.process.entrypoint.controller.ApiConstants.ORDER_PATH
 import com.scr.btg.asynchronous.process.entrypoint.model.api.ItemApiDto
 import com.scr.btg.asynchronous.process.entrypoint.model.api.OrderApiDto
 import com.scr.btg.asynchronous.process.readResponseBody
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -36,8 +36,7 @@ class OrderControllerIntegrationTest(
     fun `create order should succeed and create order in map`() {
         val request = OrderApiDto("clientId", listOf(ItemApiDto("item1"), ItemApiDto("item2")))
         val result = mockMvc.perform(
-            post("/api/orders")
-                .contentType(APPLICATION_JSON)
+            post(ORDER_PATH)
                 .withJsonBody(request, objectMapper)
         ).andExpect(status().isCreated).andReturn()
         val body = result.readResponseBody<OrderApiDto>(objectMapper)
@@ -52,8 +51,7 @@ class OrderControllerIntegrationTest(
     fun `create order should return bad request when incorrect payload`() {
         val request = OrderApiDto(" ") // Invalid clientId (blank)
         mockMvc.perform(
-            post("/api/orders")
-                .contentType(APPLICATION_JSON)
+            post(ORDER_PATH)
                 .withJsonBody(request, objectMapper)
         ).andExpect(status().isBadRequest)
     }
@@ -62,8 +60,7 @@ class OrderControllerIntegrationTest(
     fun `create order should return bad request when providing non expected field in payload`() {
         val request = OrderApiDto("clientId", listOf(ItemApiDto("item1"), ItemApiDto("item2")), id = "forced_id")
         mockMvc.perform(
-            post("/api/orders")
-                .contentType(APPLICATION_JSON)
+            post(ORDER_PATH)
                 .withJsonBody(request, objectMapper)
         ).andExpect(status().isBadRequest)
     }
@@ -72,7 +69,7 @@ class OrderControllerIntegrationTest(
     fun `find order should succeed and return an order`() {
         val order = Order("clientId", listOf(Item("item1"), Item("item2")))
         orderRepository.save(order)
-        val result = mockMvc.perform(get("/api/orders/" + order.id))
+        val result = mockMvc.perform(get("$ORDER_PATH/${order.id}"))
             .andExpect(status().isOk).andReturn()
         val body = result.readResponseBody<OrderApiDto>(objectMapper)
         assertThat(body).isNotNull
@@ -86,8 +83,7 @@ class OrderControllerIntegrationTest(
     fun `create order should succeed and be processed after some delay`() {
         val request = OrderApiDto("clientId", listOf(ItemApiDto("item1"), ItemApiDto("item2")))
         val creationResult = mockMvc.perform(
-            post("/api/orders")
-                .contentType(APPLICATION_JSON)
+            post(ORDER_PATH)
                 .withJsonBody(request, objectMapper)
         ).andExpect(status().isCreated).andReturn()
         val creationResponseBody = creationResult.readResponseBody<OrderApiDto>(objectMapper)
@@ -98,7 +94,7 @@ class OrderControllerIntegrationTest(
         assertThat(creationResponseBody.status).isEqualTo(PENDING)
 
         await().atMost(30, SECONDS).untilAsserted {
-            val consultationResult = mockMvc.perform(get("/api/orders/" + creationResponseBody.id))
+            val consultationResult = mockMvc.perform(get("$ORDER_PATH/${creationResponseBody.id}"))
                 .andExpect(status().isOk).andReturn()
             val consultationResponseBody = consultationResult.readResponseBody<OrderApiDto>(objectMapper)
             assertThat(consultationResponseBody).isNotNull
