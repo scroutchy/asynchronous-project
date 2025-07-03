@@ -1,6 +1,7 @@
 package com.scr.btg.asynchronous.process.entrypoint.controller
 
 import com.scr.btg.asynchronous.process.domains.order.service.OrderService
+import com.scr.btg.asynchronous.process.entrypoint.controller.ApiConstants.ORDER_PATH
 import com.scr.btg.asynchronous.process.entrypoint.controller.ValidationGroups.OrderRequest
 import com.scr.btg.asynchronous.process.entrypoint.mapper.toApiDto
 import com.scr.btg.asynchronous.process.entrypoint.mapper.toEntity
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("api/orders")
+@RequestMapping(ORDER_PATH)
 class OrderController(private val orderService: OrderService) {
 
     private val logger: Logger = LoggerFactory.getLogger(OrderController::class.java)
