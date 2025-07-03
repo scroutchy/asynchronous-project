@@ -1,0 +1,48 @@
+image: gradle:jdk17-alpine
+
+services:
+  - name: docker:dind
+    alias: docker
+    command: [ "--tls=false" ]
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: unix:///var/run/docker.sock
+  TESTCONTAINERS_HOST_OVERRIDE: "host.docker.internal"
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  IMAGE_NAME: "asynchronous-process"
+  REGISTRY: "registry.gitlab.com/btg9941127"
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script:
+    - gradle --build-cache assemble
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+    paths:
+      - build
+      - .gradle
+  artifacts:
+    paths:
+      - build/libs/asynchronous-process-0.0.1-SNAPSHOT.jar
+    expire_in: 1 day
+
+test:
+  stage: test
+  script: gradle check
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: pull
+    paths:
+      - build
+      - .gradle
+  dependencies:
+    - build
+  artifacts:
+    reports:
+      junit: build/test-results/test/**/TEST-*.xml
