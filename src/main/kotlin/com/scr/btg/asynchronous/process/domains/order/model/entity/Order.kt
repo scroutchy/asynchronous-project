@@ -8,6 +8,6 @@ data class Order(
     @field:NotBlank
     val clientId: String,
     val items: List<Item> = listOf(),
-    val status: OrderStatus? = PENDING,
+    val status: OrderStatus = PENDING,
     val id: String = UUID.randomUUID().toString(),
 )
