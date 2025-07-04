@@ -2,6 +2,8 @@ package com.scr.btg.asynchronous.process.entrypoint.controller.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.scr.btg.asynchronous.process.AbstractIntegrationTest
+import com.scr.btg.asynchronous.process.domains.order.error.OrderErrorExceptionHandler.ErrorResponse
+import com.scr.btg.asynchronous.process.domains.order.error.OrderErrorReasonCode.ORDER_NOT_FOUND
 import com.scr.btg.asynchronous.process.domains.order.model.entity.Item
 import com.scr.btg.asynchronous.process.domains.order.model.entity.Order
 import com.scr.btg.asynchronous.process.domains.order.model.entity.OrderStatus.PENDING
@@ -79,6 +81,16 @@ class OrderControllerIntegrationTest(
         assertThat(body.clientId).isEqualTo(order.clientId)
         assertThat(body.items).containsExactlyInAnyOrderElementsOf(order.items.map { ItemApiDto(it.description) })
         assertThat(body.status).isEqualTo(PENDING)
+    }
+
+    @Test
+    fun `find order should return not found when order does not exist`() {
+        val result = mockMvc.perform(get("$ORDER_PATH/nonExistingId"))
+            .andExpect(status().isNotFound).andReturn()
+        val body = result.readResponseBody<ErrorResponse>(objectMapper)
+        assertThat(body).isNotNull
+        assertThat(body.reasonCode).isEqualTo(ORDER_NOT_FOUND)
+        assertThat(body.message).isEqualTo("Order with id nonExistingId not found")
     }
 
     @Test
