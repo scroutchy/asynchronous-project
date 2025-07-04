@@ -9,6 +9,7 @@ import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,7 +29,7 @@ class OrderCreationEventProcessorTest {
     fun `process should succeed and call orderService`() {
         val order = Order("clientId")
         every { orderService.updateStatus(order.id) } returns order.copy(status = OrderStatus.PROCESSED)
-        assertDoesNotThrow { orderCreationEventProcessor.process(order.id) }
+        assertDoesNotThrow { runBlocking { orderCreationEventProcessor.process(order.id) } }
         verify(exactly = 1) { orderService.updateStatus(order.id) }
         confirmVerified(orderService)
     }
@@ -37,7 +38,7 @@ class OrderCreationEventProcessorTest {
     fun `process should throw exception when orderService fails`() {
         val orderId = "invalidId"
         every { orderService.updateStatus(orderId) } throws NoSuchElementException("Order not found")
-        val throwable = Assertions.catchThrowable { orderCreationEventProcessor.process(orderId) }
+        val throwable = Assertions.catchThrowable { runBlocking { orderCreationEventProcessor.process(orderId) } }
         Assertions.assertThat(throwable).isInstanceOf(NoSuchElementException::class.java)
         verify(exactly = 1) { orderService.updateStatus(orderId) }
         confirmVerified(orderService)

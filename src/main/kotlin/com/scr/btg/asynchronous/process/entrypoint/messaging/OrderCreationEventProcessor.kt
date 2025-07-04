@@ -1,6 +1,7 @@
 package com.scr.btg.asynchronous.process.entrypoint.messaging
 
 import com.scr.btg.asynchronous.process.domains.order.service.OrderService
+import kotlinx.coroutines.delay
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.annotation.KafkaListener
@@ -11,14 +12,15 @@ import org.springframework.stereotype.Component
 class OrderCreationEventProcessor(private val orderService: OrderService) {
 
     private val logger = LoggerFactory.getLogger(OrderCreationEventProcessor::class.java)
-
     @Value("\${kafka.processing.delay:0}")
     private val delay: Long = 0
 
     @RetryableTopic
     @KafkaListener(topics = ["\${kafka.topics.order-creation}"], groupId = "status-update-group")
-    fun process(orderId: String) {
-        Thread.sleep(delay) // simulate delay in processing
+    suspend fun process(orderId: String) {
+        if (delay > 0) {
+            delay(delay)
+        } // simulate delay in processing
         logger.info("Processing order creation event for orderId: $orderId")
         try {
             orderService.updateStatus(orderId).also { logger.info("Order creation event successfully processed for orderId: $orderId") }
